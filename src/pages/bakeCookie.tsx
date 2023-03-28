@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { useState, FormEvent, SyntheticEvent } from 'react';
 import type { NextPageWithLayout } from '@/types';
 import { NextSeo } from 'next-seo';
@@ -14,6 +16,9 @@ import {
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { downloadAndStoreFiles, getSavedFile } from '@/lib/db';
 
+import { WebBundlr } from '@bundlr-network/client';
+import { ethers } from 'ethers';
+
 const BakeCookiesPage: NextPageWithLayout = () => {
   const { wallet, publicKey } = useWallet();
 
@@ -25,19 +30,83 @@ const BakeCookiesPage: NextPageWithLayout = () => {
 
   let [txPayload, setTxPayload] = useState<string>('');
 
+  const initialiseBundlrAndUploadContent = async () => {
+    await window.ethereum.enable();
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    provider.getSigner = () => signer;
+
+    const bundlr = new WebBundlr(
+      'https://devnet.bundlr.network',
+      'matic',
+      provider,
+      {
+        providerUrl: 'https://rpc.ankr.com/polygon_mumbai',
+      }
+    );
+    await bundlr.ready();
+
+    const dataContent = 'This is test post';
+    const tx = await bundlr.upload(dataContent, {
+      tags: [{ name: 'Content-Type', value: 'text' }],
+    });
+    console.log(tx);
+    console.log(`File uploaded ==> https://arweave.net/${tx.id}`);
+
+    // console.log('Tx ID', tx.id)
+    // console.log('FF', encodeToFF(tx.id))
+
+    return encodeToFF(tx.id);
+  };
+
+  const ENCODING =
+    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-';
+  const ARWEAVE_TX_ID_LENGTH = 43;
+
+  const encodeToFF = (tx) => {
+    if (tx.length !== ARWEAVE_TX_ID_LENGTH)
+      throw Error('Incorrect tx id length');
+    let bin = '';
+    for (let i = 0; i < ARWEAVE_TX_ID_LENGTH; i++) {
+      const index = ENCODING.indexOf(tx[i]);
+      if (index < 0) throw Error('Invalid tx id');
+      const bin_index = index.toString(2);
+      const padded_bin_index = bin_index.padStart(6, '0');
+      bin = bin.concat(padded_bin_index);
+    }
+    const ff = BigInt('0b' + bin).toString(10);
+    return ff;
+  };
+
+  const decodeFromFF = (ff) => {
+    const bin = BigInt(ff).toString(2);
+    res = bin.match(/.{1,6}/g);
+    const indices = res.map((x) => parseInt(x, 2));
+    const values = indices.map((x) => ENCODING[x]);
+    const decoded = values.join('');
+    if (decoded.length !== ARWEAVE_TX_ID_LENGTH)
+      throw Error('Incorrect tx id length');
+    return decoded;
+  };
+
   const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (!publicKey) throw new WalletNotConnectedError();
 
-    const inputs = [toAddress, `${cookieType}u64`, `${cookieDeliciousness}u64`];
+    const postTxId = await initialiseBundlrAndUploadContent();
+    console.log('Post TX ID', postTxId);
+
+    // const inputs = [toAddress, `${cookieType}u64`, `${cookieDeliciousness}u64`];
+    const inputs = [`${postTxId}field`];
     // console.log(inputs);
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.Testnet,
-      'cookie_monster_14rwsw.aleo',
-      'bake_cookie',
+      'postsV.aleo',
+      'post',
       inputs,
-      'https://aleo-public.s3.us-west-2.amazonaws.com/testnet3/bake_cookie_with_function_name.prover'
+      'https://media.githubusercontent.com/media/prajwolrg/zk-posts/proving_keys/build/build/post.prover'
     );
 
     console.log(aleoTransaction);
