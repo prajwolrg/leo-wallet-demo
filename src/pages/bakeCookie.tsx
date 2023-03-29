@@ -16,17 +16,16 @@ import {
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { downloadAndStoreFiles, getSavedFile } from '@/lib/db';
 
+import clientPromise from '../lib/mongodb';
+
 import { WebBundlr } from '@bundlr-network/client';
 import { ethers } from 'ethers';
+import { method } from 'lodash';
 
 const BakeCookiesPage: NextPageWithLayout = () => {
   const { wallet, publicKey } = useWallet();
 
-  let [toAddress, setToAddress] = useState(
-    'aleo1kf3dgrz9lqyklz8kqfy0hpxxyt78qfuzshuhccl02a5x43x6nqpsaapqru'
-  );
-  let [cookieType, setCookieType] = useState<number | undefined>(1);
-  let [cookieDeliciousness, setCookieDeliciousness] = useState('3');
+  let [yourPost, setYourPost] = useState('');
 
   let [txPayload, setTxPayload] = useState<string>('');
 
@@ -47,6 +46,22 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     );
     await bundlr.ready();
 
+    // Check the price to upload 1MB of data
+    // The function accepts a number of bytes, so to check the price of
+    // 1MB, check the price of 1,048,576 bytes.
+    // const dataSizeToCheck = 1048576;
+    // const price1MBAtomic = await bundlr.getPrice(dataSizeToCheck);
+
+    // To ensure accuracy when performing mathematical operations
+    // on fractional numbers in JavaScript, it is common to use atomic units.
+    // This is a way to represent a floating point (decimal) number using non-decimal notation.
+    // Once we have the value in atomic units, we can convert it into something easier to read.
+    // const price1MBConverted = bundlr.utils.unitConverter(price1MBAtomic);
+    // console.log(`Uploading 1MB to Bundlr costs $${price1MBConverted}`);
+
+    // const response = await bundlr.fund(price1MBAtomic);
+    // console.log(`Funding successful txID=${response.id} amount funded=${response.quantity}`);
+
     const dataContent = 'This is test post';
     const tx = await bundlr.upload(dataContent, {
       tags: [{ name: 'Content-Type', value: 'text' }],
@@ -54,10 +69,10 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     console.log(tx);
     console.log(`File uploaded ==> https://arweave.net/${tx.id}`);
 
-    // console.log('Tx ID', tx.id)
-    // console.log('FF', encodeToFF(tx.id))
+    console.log('Tx ID', tx.id);
+    console.log('FF', encodeToFF(tx.id));
 
-    return encodeToFF(tx.id);
+    return tx;
   };
 
   const ENCODING =
@@ -90,16 +105,36 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     return decoded;
   };
 
+  const createPost = (arweaveTx, aleoTx) => {
+    return {
+      cid: arweaveTx.id,
+      timestamp: arweaveTx.timestamp,
+      content: yourPost,
+      total_tips: '0',
+      uncollected_tips: '0',
+      aleo: aleoTx,
+    };
+  };
+
+  const uploadPostToDB = async (post) => {
+    console.log('Trying to upload to db', post);
+    await fetch('/api/db', {
+      method: 'POST',
+      body: JSON.stringify(post),
+    });
+  };
+
   const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (!publicKey) throw new WalletNotConnectedError();
 
-    const postTxId = await initialiseBundlrAndUploadContent();
+    const arweaveTx = await initialiseBundlrAndUploadContent();
+    const postTxId = arweaveTx.id;
+    const encodedPostTxId = encodeToFF(postTxId);
     console.log('Post TX ID', postTxId);
+    console.log('Encoded Post TX ID', encodedPostTxId);
 
-    // const inputs = [toAddress, `${cookieType}u64`, `${cookieDeliciousness}u64`];
-    const inputs = [`${postTxId}field`];
-    // console.log(inputs);
+    const inputs = [`${encodedPostTxId}field`];
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.Testnet,
@@ -109,7 +144,8 @@ const BakeCookiesPage: NextPageWithLayout = () => {
       'https://media.githubusercontent.com/media/prajwolrg/zk-posts/proving_keys/build/build/post.prover'
     );
 
-    console.log(aleoTransaction);
+    const post = createPost(arweaveTx, aleoTransaction);
+    uploadPostToDB(post);
 
     const txPayload =
       (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
@@ -118,20 +154,12 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     if (event.target?.elements[0]?.value) {
       event.target.elements[0].value = '';
     }
-    setTxPayload('Check your wallet to see the cookie transaction');
+    setTxPayload('Check your wallet to see the post transaction');
   };
 
-  const handleToAddressChange = (event: any) => {
+  const handleYourPostChange = (event: any) => {
     event.preventDefault();
-    setToAddress(event.currentTarget.value);
-  };
-  const handleCookieTypeChange = (event: any) => {
-    event.preventDefault();
-    setCookieType(event.currentTarget.value);
-  };
-  const handleDeliciousnessChange = (event: any) => {
-    event.preventDefault();
-    setCookieDeliciousness(event.currentTarget.value);
+    setYourPost(event.currentTarget.value);
   };
 
   return (
@@ -152,48 +180,21 @@ const BakeCookiesPage: NextPageWithLayout = () => {
           <label className="flex w-full items-center py-4">
             <input
               className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-              placeholder="To address: ie, aleo1kf3dgrz9lqyklz8kqfy0hpxxyt78qfuzshuhccl02a5x43x6nqpsaapqru"
+              placeholder="Anything you want to post..."
               autoComplete="off"
               onChange={(event: FormEvent<Element>) =>
-                handleToAddressChange(event)
+                handleYourPostChange(event)
               }
-              value={toAddress}
+              value={yourPost}
             />
             <span className="pointer-events-none absolute flex h-full w-8 cursor-pointer items-center justify-center text-gray-600 hover:text-gray-900 ltr:left-0 ltr:pl-2 rtl:right-0 rtl:pr-2 dark:text-gray-500 sm:ltr:pl-3 sm:rtl:pr-3">
               <Check className="h-4 w-4" />
             </span>
           </label>
-          <label className="flex w-full items-center py-4">
-            <input
-              className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-              placeholder="Cookie type as u64"
-              autoComplete="off"
-              onChange={(event: FormEvent<Element>) =>
-                handleCookieTypeChange(event)
-              }
-              value={cookieType}
-            />
-            <span className="pointer-events-none absolute flex h-full w-8 cursor-pointer items-center justify-center text-gray-600 hover:text-gray-900 ltr:left-0 ltr:pl-2 rtl:right-0 rtl:pr-2 dark:text-gray-500 sm:ltr:pl-3 sm:rtl:pr-3">
-              <Check className="h-4 w-4" />
-            </span>
-          </label>
-          <label className="flex w-full items-center py-4">
-            <input
-              className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-              placeholder="How delicious should this cookie be? Use u64"
-              autoComplete="off"
-              onChange={(event: FormEvent<Element>) =>
-                handleDeliciousnessChange(event)
-              }
-              value={cookieDeliciousness}
-            />
-            <span className="pointer-events-none absolute flex h-full w-8 cursor-pointer items-center justify-center text-gray-600 hover:text-gray-900 ltr:left-0 ltr:pl-2 rtl:right-0 rtl:pr-2 dark:text-gray-500 sm:ltr:pl-3 sm:rtl:pr-3">
-              <Check className="h-4 w-4" />
-            </span>
-          </label>
+
           <div className="flex items-center justify-center">
             <Button
-              disabled={!publicKey || cookieDeliciousness.length < 1}
+              disabled={!publicKey}
               type="submit"
               color="white"
               className="shadow-card dark:bg-gray-700 md:h-10 md:px-5 xl:h-12 xl:px-7"
