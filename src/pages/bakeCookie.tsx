@@ -145,7 +145,6 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     );
 
     const post = createPost(arweaveTx, aleoTransaction);
-    uploadPostToDB(post);
 
     const txPayload =
       (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
@@ -155,6 +154,7 @@ const BakeCookiesPage: NextPageWithLayout = () => {
       event.target.elements[0].value = '';
     }
     setTxPayload('Check your wallet to see the post transaction');
+    uploadPostToDB(post);
   };
 
   const handleYourPostChange = (event: any) => {
