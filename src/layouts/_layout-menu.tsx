@@ -20,8 +20,8 @@ const MenuLinks = [
   },
   { name: 'Sign', href: '/sign' },
   { name: 'Decrypt', href: '/decrypt' },
-  { name: 'Records', href: '/records' },
-  { name: 'BakeCookie', href: '/bakeCookie' },
+  { name: 'Collect', href: '/collect' },
+  { name: 'Post', href: '/post' },
 ];
 
 export function MenuItems() {

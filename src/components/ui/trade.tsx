@@ -25,16 +25,16 @@ const tradeMenu = [
     value: routes.decrypt,
   },
   {
-    name: 'Records',
-    value: routes.records,
+    name: 'Collect',
+    value: routes.collect,
   },
   {
     name: 'Transfer',
     value: routes.transfer,
   },
   {
-    name: 'BakeCookie',
-    value: routes.bakeCookie,
+    name: 'Post',
+    value: routes.post,
   },
 ];
 

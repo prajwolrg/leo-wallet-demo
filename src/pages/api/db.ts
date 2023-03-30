@@ -14,7 +14,6 @@ if (!process.env.NEXT_PUBLIC_MONGODB_PASSWORD) {
 const username = process.env.NEXT_PUBLIC_MONGODB_USERNAME;
 const password = process.env.NEXT_PUBLIC_MONGODB_PASSWORD;
 const uri = `mongodb+srv://${username}:${password}@cluster0.i0dtu6q.mongodb.net/sample_mflix?retryWrites=true&w=majority`;
-// const uri = "mongodb+srv://prajwollucifer:AoMbpMmVXbAsXPTh@cluster0.i0dtu6q.mongodb.net/sample_mflix?retryWrites=true&w=majority"
 // console.log(uri)
 const options = {};
 

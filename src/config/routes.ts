@@ -2,9 +2,9 @@ const routes = {
   gettingStarted: '/',
   sign: '/sign',
   decrypt: '/decrypt',
-  records: '/records',
+  collect: '/collect',
   transfer: '/transfer',
-  bakeCookie: '/bakeCookie',
+  post: '/post',
 };
 
 export default routes;

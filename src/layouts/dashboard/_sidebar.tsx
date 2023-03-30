@@ -30,9 +30,9 @@ const menuItems = [
     href: routes.decrypt,
   },
   {
-    name: 'Records',
+    name: 'Collect',
     icon: <FarmIcon />,
-    href: routes.records,
+    href: routes.collect,
   },
   {
     name: 'Transfer',
@@ -40,9 +40,9 @@ const menuItems = [
     href: routes.transfer,
   },
   {
-    name: 'BakeCookie',
+    name: 'Post',
     icon: <OvenIcon />,
-    href: routes.bakeCookie,
+    href: routes.post,
   },
 ];
 

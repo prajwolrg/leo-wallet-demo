@@ -5,7 +5,7 @@ import type { NextPageWithLayout } from '@/types';
 import { NextSeo } from 'next-seo';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import Trade from '@/components/ui/trade';
-import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
+import { useLocalStorage, useWallet } from '@demox-labs/aleo-wallet-adapter-react';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import { Check } from '@/components/icons/check';
 import Button from '@/components/ui/button';
@@ -22,12 +22,27 @@ import { WebBundlr } from '@bundlr-network/client';
 import { ethers } from 'ethers';
 import { method } from 'lodash';
 
+const { createHash } = require('crypto');
+
 const BakeCookiesPage: NextPageWithLayout = () => {
   const { wallet, publicKey } = useWallet();
 
   let [yourPost, setYourPost] = useState('');
 
   let [txPayload, setTxPayload] = useState<string>('');
+
+  function getLocalStorageItem(key) {
+    if (typeof window !== 'undefined') {
+      return window.localStorage.getItem(key);
+    }
+  }
+
+  function setLocalStorageItem(key, value) {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(key, value);
+    }
+  }
+
 
   const initialiseBundlrAndUploadContent = async () => {
     await window.ethereum.enable();
@@ -62,7 +77,8 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     // const response = await bundlr.fund(price1MBAtomic);
     // console.log(`Funding successful txID=${response.id} amount funded=${response.quantity}`);
 
-    const dataContent = 'This is test post';
+    let dataContent = {'content': yourPost};
+    dataContent = JSON.stringify(dataContent)
     const tx = await bundlr.upload(dataContent, {
       tags: [{ name: 'Content-Type', value: 'text' }],
     });
@@ -79,6 +95,22 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-';
   const ARWEAVE_TX_ID_LENGTH = 43;
 
+  function splitString(str) {
+    const length = str.length;
+    const midpoint = Math.floor(length / 2);
+    let firstHalf = str.slice(0, midpoint);
+    let secondHalf = str.slice(midpoint);
+
+    // check if the second half starts with '0', if it does, shift the midpoint to the left
+    while (secondHalf.charAt(0) === '0') {
+      secondHalf = str.slice(--midpoint);
+      firstHalf = str.slice(0, midpoint);
+    }
+
+    return [firstHalf, secondHalf];
+  }
+
+
   const encodeToFF = (tx) => {
     if (tx.length !== ARWEAVE_TX_ID_LENGTH)
       throw Error('Incorrect tx id length');
@@ -91,7 +123,22 @@ const BakeCookiesPage: NextPageWithLayout = () => {
       bin = bin.concat(padded_bin_index);
     }
     const ff = BigInt('0b' + bin).toString(10);
-    return ff;
+    // console.log(`Length of string is ${ff.length}`)
+    // console.log(bin)
+    // console.log(bin.length)
+
+    const hash = createHash('sha256').update(ff).digest('hex')
+    const partHash = hash.split(/(.{60})/)[1]
+    const partHashFF = BigInt(`0x` + partHash).toString(10)
+    // console.log(hashBigInt.length)
+
+    let parts = splitString(ff);
+
+    return {
+      cid_part1: parts[0],
+      cid_part2: parts[1],
+      cid: partHashFF
+    }
   };
 
   const decodeFromFF = (ff) => {
@@ -124,28 +171,66 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     });
   };
 
+  const createAleoInputs = (txId) => {
+    let rawValues = encodeToFF(txId)
+    console.log(rawValues)
+    let aleoInputs = [`${rawValues.cid_part1}field`, `${rawValues.cid_part2}field`, `${rawValues.cid}field`]
+    return aleoInputs
+  }
+
+  const addPostToLocalStorage = async (post) => {
+    let posts = getLocalStorageItem('unconfirmed-posts')
+    let _posts;
+    if (posts) {
+      _posts = JSON.parse(posts);
+      _posts.push(post);
+      _posts = JSON.stringify(_posts)
+    } else {
+      _posts = []
+      _posts.push(post)
+      _posts = JSON.stringify(_posts)
+    }
+    setLocalStorageItem('unconfirmed-posts', _posts)
+  }
+
+  const removePostFromLocalStorage = async (post) => {
+    let posts = getLocalStorageItem('unconfirmed-posts')
+    let _posts;
+    if (posts) {
+      _posts = JSON.parse(posts);
+      _posts = _posts.filter(_post => post.cid !== _post.cid)
+      _posts = JSON.stringify(_posts)
+    } else {
+      _posts = []
+      _posts = JSON.stringify(_posts)
+    }
+    setLocalStorageItem('unconfirmed-posts', _posts)
+  }
+
   const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (!publicKey) throw new WalletNotConnectedError();
 
     const arweaveTx = await initialiseBundlrAndUploadContent();
     const postTxId = arweaveTx.id;
-    const encodedPostTxId = encodeToFF(postTxId);
+    // const postTxId = 'jloeAUwud8AytoTeVyQq7mKi7TtzEwtoTl48LpbIi_A';
     console.log('Post TX ID', postTxId);
-    console.log('Encoded Post TX ID', encodedPostTxId);
+    // console.log('Encoded Post TX ID', encodedPostTxId);
 
-    const inputs = [`${encodedPostTxId}field`];
+    const inputs = createAleoInputs(postTxId);
+    console.log(inputs)
+
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.Testnet,
-      'postsV.aleo',
+      'postsVI.aleo',
       'post',
       inputs,
       'https://media.githubusercontent.com/media/prajwolrg/zk-posts/proving_keys/build/build/post.prover'
     );
 
-    const post = createPost(arweaveTx, aleoTransaction);
-
+    // const post = createPost(arweaveTx, aleoTransaction);
+    // addPostToLocalStorage(post)
     const txPayload =
       (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
         aleoTransaction
@@ -154,7 +239,8 @@ const BakeCookiesPage: NextPageWithLayout = () => {
       event.target.elements[0].value = '';
     }
     setTxPayload('Check your wallet to see the post transaction');
-    uploadPostToDB(post);
+    // uploadPostToDB(post);
+    // removePostFromLocalStorage(post)
   };
 
   const handleYourPostChange = (event: any) => {

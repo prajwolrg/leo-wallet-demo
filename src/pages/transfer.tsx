@@ -65,8 +65,8 @@ const TransactionPage: NextPageWithLayout = () => {
   return (
     <>
       <NextSeo
-        title="Leo Wallet Request Records"
-        description="Request Records from the Leo Wallet"
+        title="Leo Wallet Request Collect"
+        description="Request Collect from the Leo Wallet"
       />
       <Trade>
         <form
@@ -108,7 +108,7 @@ const TransactionPage: NextPageWithLayout = () => {
           <label className="flex w-full items-center py-4">
             <input
               className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-              placeholder="Record, get from Records form"
+              placeholder="Record, get from Collect form"
               autoComplete="off"
               onChange={(event: FormEvent<Element>) =>
                 handleRecordChange(event)
