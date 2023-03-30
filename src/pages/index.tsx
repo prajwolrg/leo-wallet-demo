@@ -72,7 +72,7 @@ const GettingStartedPage: NextPageWithLayout = () => {
         <Section title="STEP 4 - START SIGNING" bgColor="">
           &bull; Click on the button below to start signing your first Aleo
           messages! <br /> <br />
-          <a href={`${routes.sign}`}>
+          <a href={`${routes.tip}`}>
             <Button>Start Signing</Button>
           </a>
         </Section>

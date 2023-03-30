@@ -1,10 +1,10 @@
 const routes = {
   gettingStarted: '/',
-  sign: '/sign',
-  decrypt: '/decrypt',
-  collect: '/collect',
-  transfer: '/transfer',
   post: '/post',
+  collect: '/collect',
+  tip: '/tip',
+  decrypt: '/decrypt',
+  mint: '/mint',
 };
 
 export default routes;

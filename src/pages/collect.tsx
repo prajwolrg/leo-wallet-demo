@@ -62,15 +62,23 @@ const RecordsPage: NextPageWithLayout = () => {
     event.preventDefault();
     if (!publicKey) throw new WalletNotConnectedError();
 
-    const _myPosts = (await requestRecords!(PROGRAM)) || '';
+    const _myRecords = (await requestRecords!(PROGRAM)) || '';
     if (event.target?.elements[0]?.value) {
       event.target.elements[0].value = '';
     }
-    for (let i=0; i<_myPosts.length; i++) {
-      const postContent = await decodePostContent(_myPosts[i])
-      console.log(postContent)
-      _myPosts[i].content = postContent
-      setMyPosts(_myPosts)
+
+    const _myPosts = []
+    for (let i=0; i<_myRecords.length; i++) {
+      const _myRecord = _myRecords[i]
+      console.log(_myRecord)
+      if (_myRecord.data.cid) {
+        const _post = _myRecord
+        const postContent = await decodePostContent(_myRecord)
+        console.log(postContent)
+        _post.content = postContent
+        _myPosts.push(_post)
+        setMyPosts(_myPosts)
+      }
     }
 
     // const recordsFormatted = collect.map((rec) => JSON.stringify(rec, null, 2));

@@ -17,24 +17,24 @@ const Listbox = dynamic(() => import('@/components/ui/list-box'));
 
 const tradeMenu = [
   {
-    name: 'Sign',
-    value: routes.sign,
-  },
-  {
-    name: 'Decrypt',
-    value: routes.decrypt,
+    name: 'Post',
+    value: routes.post,
   },
   {
     name: 'Collect',
     value: routes.collect,
   },
   {
-    name: 'Transfer',
-    value: routes.transfer,
+    name: 'Tip',
+    value: routes.tip,
   },
   {
-    name: 'Post',
-    value: routes.post,
+    name: 'Decrypt',
+    value: routes.decrypt,
+  },
+  {
+    name: 'Mint',
+    value: routes.mint,
   },
 ];
 

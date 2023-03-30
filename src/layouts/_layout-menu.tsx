@@ -18,10 +18,10 @@ const MenuLinks = [
       { name: 'Minimal', href: '/minimal' },
     ],
   },
-  { name: 'Sign', href: '/sign' },
-  { name: 'Decrypt', href: '/decrypt' },
-  { name: 'Collect', href: '/collect' },
   { name: 'Post', href: '/post' },
+  { name: 'Collect', href: '/collect' },
+  { name: 'Tip', href: '/tip' },
+  { name: 'Mint', href: '/mint' },
 ];
 
 export function MenuItems() {

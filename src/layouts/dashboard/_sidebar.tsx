@@ -20,14 +20,9 @@ const menuItems = [
     href: routes.gettingStarted,
   },
   {
-    name: 'Sign',
-    icon: <ExchangeIcon />,
-    href: routes.sign,
-  },
-  {
-    name: 'Decrypt',
-    icon: <Unlocked />,
-    href: routes.decrypt,
+    name: 'Post',
+    icon: <OvenIcon />,
+    href: routes.post,
   },
   {
     name: 'Collect',
@@ -35,14 +30,19 @@ const menuItems = [
     href: routes.collect,
   },
   {
-    name: 'Transfer',
-    icon: <ChevronForward />,
-    href: routes.transfer,
+    name: 'Tip',
+    icon: <ExchangeIcon />,
+    href: routes.tip,
   },
   {
-    name: 'Post',
-    icon: <OvenIcon />,
-    href: routes.post,
+    name: 'Decrypt',
+    icon: <Unlocked />,
+    href: routes.decrypt,
+  },
+  {
+    name: 'Mint',
+    icon: <ChevronForward />,
+    href: routes.mint,
   },
 ];
 
