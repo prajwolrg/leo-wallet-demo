@@ -31,9 +31,9 @@ const encodeToFF = (tx) => {
     bin = bin.concat(padded_bin_index);
   }
   const ff = BigInt('0b' + bin).toString(10);
-  // console.log(`Length of string is ${ff.length}`)
-  // console.log(bin)
-  // console.log(bin.length)
+  // console.log('Encoding:: Original ', tx, tx.length)
+  // console.log('Encoding:: Binary ', bin, bin.length)
+  // console.log('Encoding:: Integer ', ff, ff.length)
 
   const hash = createHash('sha256').update(ff).digest('hex')
   const partHash = hash.split(/(.{60})/)[1]
@@ -50,8 +50,22 @@ const encodeToFF = (tx) => {
 };
 
 const decodeFromFF = (ff) => {
+  const REQUIRED_BINARY_LENGTH = 258
   const concated_ff = ff.cid_part1 + ff.cid_part2;
-  const bin = BigInt(concated_ff).toString(2);
+  // console.log('Decoding:: Integer ', concated_ff, concated_ff.length)
+  let bin = BigInt(concated_ff).toString(2);
+  if (bin.length > REQUIRED_BINARY_LENGTH) {
+    throw Error('Decoding: Incorrect input');
+  } else if (bin.length < REQUIRED_BINARY_LENGTH ) {
+    const differenceInBits = REQUIRED_BINARY_LENGTH - bin.length
+    if (differenceInBits > 5) {
+      throw Error('Decoding: Incorrect input');
+    } else {
+      bin = '0'.repeat(differenceInBits) + bin
+    }
+  }
+
+  // console.log('Decoding:: Binary ', bin, bin.length)
   res = bin.match(/.{1,6}/g);
   const indices = res.map((x) => parseInt(x, 2));
   const values = indices.map((x) => ENCODING[x]);
@@ -61,6 +75,10 @@ const decodeFromFF = (ff) => {
   return decoded;
 };
 
-console.log(encodeToFF('scjQv99W2hhvxIydvoCejK3R_k3sV-fgEaUiYbpki8A'))
-console.log(decodeFromFF(encodeToFF('scjQv99W2hhvxIydvoCejK3R_k3sV-fgEaUiYbpki8A')))
+ARWEAVE_TX_1 = 'Uk4XJiO045kCfstz69hUQWUefLvCJTjmAIhebYfy3dQ'
+ARWEAVE_TX_2 = 'scjQv99W2hhvxIydvoCejK3R_k3sV-fgEaUiYbpki8A'
+
+console.log(ARWEAVE_TX_1)
+// console.log(encodeToFF(ARWEAVE_TX_1))
+console.log(decodeFromFF(encodeToFF(ARWEAVE_TX_1)))
 

@@ -33,13 +33,26 @@ const RecordsPage: NextPageWithLayout = () => {
   const ARWEAVE_TX_ID_LENGTH = 43;
 
   const decodeFromFF = (ff) => {
-    const bin = BigInt(ff).toString(2);
-    const res = bin.match(/.{1,6}/g);
+    const REQUIRED_BINARY_LENGTH = 258
+    // console.log('Decoding:: Integer ', concated_ff, concated_ff.length)
+    let bin = BigInt(ff).toString(2);
+    if (bin.length > REQUIRED_BINARY_LENGTH) {
+      throw Error('Decoding: Incorrect input');
+    } else if (bin.length < REQUIRED_BINARY_LENGTH) {
+      const differenceInBits = REQUIRED_BINARY_LENGTH - bin.length
+      if (differenceInBits > 5) {
+        throw Error('Decoding: Incorrect input');
+      } else {
+        bin = '0'.repeat(differenceInBits) + bin
+      }
+    }
+    // console.log('Decoding:: Binary ', bin, bin.length)
+    let res = bin.match(/.{1,6}/g);
     const indices = res.map((x) => parseInt(x, 2));
     const values = indices.map((x) => ENCODING[x]);
     const decoded = values.join('');
-    // if (decoded.length !== ARWEAVE_TX_ID_LENGTH)
-    //   throw Error('Incorrect tx id length');
+    if (decoded.length !== ARWEAVE_TX_ID_LENGTH)
+      throw Error('Incorrect tx id length');
     return decoded;
   };
 
@@ -52,6 +65,7 @@ const RecordsPage: NextPageWithLayout = () => {
     let _cid = _cidPart1AsFF + _cidPart2AsFF
     let arweaveTxId = decodeFromFF(_cid)
     let arweaveUrl = `https://arweave.net/${arweaveTxId}`
+    // console.log('Fetching from', arweaveUrl)
     let res = await fetch(arweaveUrl)
     res = await res.json()
     return res.content;
@@ -68,18 +82,18 @@ const RecordsPage: NextPageWithLayout = () => {
     }
 
     const _myPosts = []
-    for (let i=0; i<_myRecords.length; i++) {
+    for (let i = 0; i < _myRecords.length; i++) {
       const _myRecord = _myRecords[i]
-      console.log(_myRecord)
+      // console.log(_myRecord)
       if (_myRecord.data.cid) {
         const _post = _myRecord
         const postContent = await decodePostContent(_myRecord)
-        console.log(postContent)
+        // console.log(postContent)
         _post.content = postContent
         _myPosts.push(_post)
-        setMyPosts(_myPosts)
       }
     }
+    setMyPosts(_myPosts)
 
     // const recordsFormatted = collect.map((rec) => JSON.stringify(rec, null, 2));
     // console.log(recordsFormatted)
@@ -145,7 +159,7 @@ const RecordsPage: NextPageWithLayout = () => {
 
         <div>
           {
-            myPosts.map((post: { id: string | number | readonly string[] | undefined; content: string}) => {
+            myPosts.map((post: { id: string | number | readonly string[] | undefined; content: string }) => {
               return (
                 <div >
                   <label className="flex w-full items-center">

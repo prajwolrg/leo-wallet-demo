@@ -11,8 +11,10 @@ import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
 import { Copy } from '@/components/icons/copy';
 import { WalletNotConnectedError } from '@demox-labs/aleo-wallet-adapter-base';
 
+const PROGRAM = 'postsVI.aleo'
+
 const SignPage: NextPageWithLayout = () => {
-  const { wallet, publicKey, sendTransaction, signAllTransactions } =
+  const { wallet, publicKey, requestRecords } =
     useWallet();
   let [message, setMessage] = useState('');
   let [signature, setSignature] = useState('');
@@ -25,6 +27,8 @@ const SignPage: NextPageWithLayout = () => {
       setCopyButtonStatus(copyButtonStatus);
     }, 1500);
   };
+
+  let [myAmountRecords, setMyAmountRecords] = useState([])
 
   const handleSubmit = async (event: any) => {
     event.preventDefault();
@@ -42,6 +46,38 @@ const SignPage: NextPageWithLayout = () => {
     setSignature(signature);
   };
 
+  const checkMyBalance = async (event: any) => {
+    event.preventDefault()
+    if (!publicKey) throw new WalletNotConnectedError();
+
+    const _myRecords = (await requestRecords!(PROGRAM)) || '';
+
+    const _myAmountRecords = []
+
+    const VALUE_TO_REMOVE = "u64.private"
+    let amount = 0
+    for (let i=0; i<_myRecords.length; i++) {
+      const _myRecord = _myRecords[i];
+      console.log(_myRecord)
+      let amountInStr = _myRecord.data.amount
+      if (amountInStr) {
+        _myAmountRecords.push(_myRecord)
+        amountInStr = amountInStr.substring(0, amountInStr.length - VALUE_TO_REMOVE.length)
+        amount += parseInt(amountInStr);
+      }
+    }
+
+    console.log(`Balance`, amount)
+
+  }
+
+  const loadPostsFromDB = async () => {
+    let res = await fetch('/api/db')
+    const posts = await res.json()
+
+    console.log(posts)
+  }
+
   const handleChange = (event: any) => {
     event.preventDefault();
     setMessage(event.currentTarget.value);
@@ -54,6 +90,20 @@ const SignPage: NextPageWithLayout = () => {
         description="Sign Messages with the Leo Wallet"
       />
       <Trade>
+        <label className="flex w-full items-center">
+          <span className="pointer-events-none absolute flex h-full w-8 cursor-pointer items-center justify-center text-gray-600 hover:text-gray-900 ltr:left-0 ltr:pl-2 rtl:right-0 rtl:pr-2 dark:text-gray-500 sm:ltr:pl-3 sm:rtl:pr-3">
+            <Check className="h-4 w-4" />
+          </span>
+          <Button
+            disabled={!publicKey}
+            color="white"
+            className="ml-4 shadow-card dark:bg-gray-700 md:h-10 md:px-5 xl:h-12 xl:px-7"
+            onClick={loadPostsFromDB}
+          >
+            {!publicKey ? 'Connect Your Wallet' : 'Check My Balance'}
+          </Button>
+        </label>
+
         <form
           className="relative flex w-full rounded-full md:w-auto"
           noValidate

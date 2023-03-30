@@ -77,7 +77,7 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     // const response = await bundlr.fund(price1MBAtomic);
     // console.log(`Funding successful txID=${response.id} amount funded=${response.quantity}`);
 
-    let dataContent = {'content': yourPost};
+    let dataContent = { 'content': yourPost };
     dataContent = JSON.stringify(dataContent)
     const tx = await bundlr.upload(dataContent, {
       tags: [{ name: 'Content-Type', value: 'text' }],
@@ -139,17 +139,6 @@ const BakeCookiesPage: NextPageWithLayout = () => {
       cid_part2: parts[1],
       cid: partHashFF
     }
-  };
-
-  const decodeFromFF = (ff) => {
-    const bin = BigInt(ff).toString(2);
-    res = bin.match(/.{1,6}/g);
-    const indices = res.map((x) => parseInt(x, 2));
-    const values = indices.map((x) => ENCODING[x]);
-    const decoded = values.join('');
-    if (decoded.length !== ARWEAVE_TX_ID_LENGTH)
-      throw Error('Incorrect tx id length');
-    return decoded;
   };
 
   const createPost = (arweaveTx, aleoTx) => {
@@ -229,8 +218,8 @@ const BakeCookiesPage: NextPageWithLayout = () => {
       'https://media.githubusercontent.com/media/prajwolrg/zk-posts/proving_keys/build/build/post.prover'
     );
 
-    // const post = createPost(arweaveTx, aleoTransaction);
-    // addPostToLocalStorage(post)
+    const post = createPost(arweaveTx, aleoTransaction);
+    addPostToLocalStorage(post)
     const txPayload =
       (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
         aleoTransaction
@@ -239,8 +228,8 @@ const BakeCookiesPage: NextPageWithLayout = () => {
       event.target.elements[0].value = '';
     }
     setTxPayload('Check your wallet to see the post transaction');
-    // uploadPostToDB(post);
-    // removePostFromLocalStorage(post)
+    uploadPostToDB(post);
+    removePostFromLocalStorage(post)
   };
 
   const handleYourPostChange = (event: any) => {
